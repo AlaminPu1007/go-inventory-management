@@ -2,8 +2,8 @@
 CREATE TABLE "users" (
   "id" SERIAL PRIMARY KEY,
   "username" varchar UNIQUE NOT NULL,
-  "role" varchar NOT NULL DEFAULT 'depositor',
-  "hashed_password" varchar NOT NULL,
+  "role" varchar NOT NULL DEFAULT 'admin',
+  "password" varchar NOT NULL,
   "full_name" varchar NOT NULL,
   "email" varchar UNIQUE NOT NULL,
   "is_email_verified" bool NOT NULL DEFAULT false,
@@ -26,9 +26,6 @@ CREATE INDEX "idx_orders_user_id" ON "orders" ("user_id");
 
 
 
-
-
-
 -- CREATE CATEGORIES TABLE --
 CREATE TABLE "categories" (
     id SERIAL PRIMARY KEY,
@@ -36,9 +33,6 @@ CREATE TABLE "categories" (
 );
 
 CREATE INDEX "idx_categories_name" ON "categories" ("name");
-
-
-
 
 
 
@@ -61,8 +55,6 @@ ON DELETE RESTRICT;
 -- Indexes
 CREATE INDEX "idx_products_category_id" ON "products"("category_id");
 CREATE INDEX "idx_products_name" ON "products"("name");
-
-
 
 
 

@@ -43,7 +43,7 @@ type User struct {
 	ID                int32     `json:"id"`
 	Username          string    `json:"username"`
 	Role              string    `json:"role"`
-	HashedPassword    string    `json:"hashed_password"`
+	Password          string    `json:"password"`
 	FullName          string    `json:"full_name"`
 	Email             string    `json:"email"`
 	IsEmailVerified   bool      `json:"is_email_verified"`

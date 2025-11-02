@@ -11,25 +11,25 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-    username, email, hashed_password, role, full_name
+    username, email, password, role, full_name
 ) VALUES (
   $1, $2, $3, $4, $5
-) RETURNING id, username, role, hashed_password, full_name, email, is_email_verified, password_changed_at, created_at
+) RETURNING id, username, role, password, full_name, email, is_email_verified, password_changed_at, created_at
 `
 
 type CreateUserParams struct {
-	Username       string `json:"username"`
-	Email          string `json:"email"`
-	HashedPassword string `json:"hashed_password"`
-	Role           string `json:"role"`
-	FullName       string `json:"full_name"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Role     string `json:"role"`
+	FullName string `json:"full_name"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
 		arg.Username,
 		arg.Email,
-		arg.HashedPassword,
+		arg.Password,
 		arg.Role,
 		arg.FullName,
 	)
@@ -38,7 +38,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.ID,
 		&i.Username,
 		&i.Role,
-		&i.HashedPassword,
+		&i.Password,
 		&i.FullName,
 		&i.Email,
 		&i.IsEmailVerified,
@@ -49,7 +49,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, username, role, hashed_password, full_name, email, is_email_verified, password_changed_at, created_at FROM users
+SELECT id, username, role, password, full_name, email, is_email_verified, password_changed_at, created_at FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -60,7 +60,7 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 		&i.ID,
 		&i.Username,
 		&i.Role,
-		&i.HashedPassword,
+		&i.Password,
 		&i.FullName,
 		&i.Email,
 		&i.IsEmailVerified,
