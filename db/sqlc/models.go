@@ -5,8 +5,39 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
+
+type Category struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
+}
+
+type Order struct {
+	ID          int32        `json:"id"`
+	UserID      int32        `json:"user_id"`
+	TotalAmount string       `json:"total_amount"`
+	Status      string       `json:"status"`
+	CreatedAt   sql.NullTime `json:"created_at"`
+}
+
+type OrderItem struct {
+	ID        int32  `json:"id"`
+	OrderID   int32  `json:"order_id"`
+	ProductID int32  `json:"product_id"`
+	Quantity  int32  `json:"quantity"`
+	Price     string `json:"price"`
+}
+
+type Product struct {
+	ID          int32          `json:"id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+	Price       string         `json:"price"`
+	Quantity    int32          `json:"quantity"`
+	CategoryID  int32          `json:"category_id"`
+}
 
 type User struct {
 	ID                int32     `json:"id"`
