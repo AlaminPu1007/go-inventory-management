@@ -45,7 +45,7 @@ func (server *Server) setupRouter() {
 	router := gin.Default()
 
 	// create a user
-	router.POST("/create-user", server.createUser)
+	router.POST("/users/register", server.createUser)
 	// login user
 	router.POST("/users/login", server.loginUser)
 
