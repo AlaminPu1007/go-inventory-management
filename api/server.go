@@ -54,6 +54,8 @@ func (server *Server) setupRouter() {
 	// CATEGORY ROUTES GOES HERE
 	// create category
 	authRoutes.POST(`/category/create`, server.createCategory)
+	// update category by id
+	authRoutes.PATCH("/category/:id", server.updateCategoryById)
 
 	server.router = router
 }
