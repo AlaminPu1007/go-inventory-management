@@ -53,9 +53,13 @@ func (server *Server) setupRouter() {
 
 	// CATEGORY ROUTES GOES HERE
 	// create category
-	authRoutes.POST(`/category/create`, server.createCategory)
+	authRoutes.POST(`/category/create`, adminMiddleware(), server.createCategory)
 	// update category by id
-	authRoutes.PATCH("/category/:id", server.updateCategoryById)
+	authRoutes.PATCH("/category/:id", adminMiddleware(), server.updateCategoryById)
+	// search category by name
+	authRoutes.GET("/category/search", adminMiddleware(), server.searchCategoryByName)
+	// get category by id
+	authRoutes.GET("/category/:id", adminMiddleware(), server.getCategoryById)
 
 	server.router = router
 }

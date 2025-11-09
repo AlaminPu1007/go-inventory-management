@@ -35,7 +35,7 @@ OFFSET $2 -- NUMBER OF ROWS TO SKIP
 
 -- name: SearchCategory :many
 SELECT * FROM categories
-WHERE name ILIKE '%' || $1 || '%'
+WHERE name ILIKE '%' || $1::text || '%'
 ORDER BY id
 LIMIT $2 -- NUMBER OF ROWS TO RETURN
 OFFSET $3 -- NUMBER OF ROWS TO SKIP
@@ -44,7 +44,7 @@ OFFSET $3 -- NUMBER OF ROWS TO SKIP
 -- name: CountSearchCategories :one
 SELECT COUNT(*) 
 FROM categories
-WHERE name ILIKE '%' || $1 || '%';
+WHERE name ILIKE '%' || $1::text || '%';
 
 -- name: RemoveCategory :one
 DELETE FROM categories

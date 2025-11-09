@@ -7,16 +7,15 @@ package db
 
 import (
 	"context"
-	"database/sql"
 )
 
 const countSearchCategories = `-- name: CountSearchCategories :one
 SELECT COUNT(*) 
 FROM categories
-WHERE name ILIKE '%' || $1 || '%'
+WHERE name ILIKE '%' || $1::text || '%'
 `
 
-func (q *Queries) CountSearchCategories(ctx context.Context, dollar_1 sql.NullString) (int64, error) {
+func (q *Queries) CountSearchCategories(ctx context.Context, dollar_1 string) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countSearchCategories, dollar_1)
 	var count int64
 	err := row.Scan(&count)
@@ -132,16 +131,16 @@ func (q *Queries) RemoveCategory(ctx context.Context, id int32) (Category, error
 
 const searchCategory = `-- name: SearchCategory :many
 SELECT id, name FROM categories
-WHERE name ILIKE '%' || $1 || '%'
+WHERE name ILIKE '%' || $1::text || '%'
 ORDER BY id
 LIMIT $2 -- NUMBER OF ROWS TO RETURN
 OFFSET $3 -- NUMBER OF ROWS TO SKIP
 `
 
 type SearchCategoryParams struct {
-	Column1 sql.NullString `json:"column_1"`
-	Limit   int32          `json:"limit"`
-	Offset  int32          `json:"offset"`
+	Column1 string `json:"column_1"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
 }
 
 func (q *Queries) SearchCategory(ctx context.Context, arg SearchCategoryParams) ([]Category, error) {
