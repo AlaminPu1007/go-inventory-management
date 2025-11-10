@@ -58,6 +58,8 @@ func (server *Server) setupRouter() {
 	authRoutes.PATCH("/category/:id", adminMiddleware(), server.updateCategoryById)
 	// search category by name
 	authRoutes.GET("/category/search", adminMiddleware(), server.searchCategoryByName)
+	// get list of category by {limit, offset}
+	authRoutes.GET("/categories", adminMiddleware(), server.listCategory)
 	// get category by id
 	authRoutes.GET("/category/:id", adminMiddleware(), server.getCategoryById)
 

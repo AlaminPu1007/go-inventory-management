@@ -137,7 +137,7 @@ func (server *Server) searchCategoryByName(ctx *gin.Context) {
 	data := map[string]interface{}{
 		"categories": categories,
 		"limit":      req.Size,
-		"offset":     req.PageNo,
+		"page":       req.PageNo,
 		"totalCount": totalCount,
 		"totalPages": int32(totalPages),
 	}
@@ -173,4 +173,50 @@ func (server *Server) getCategoryById(ctx *gin.Context) {
 	}
 
 	NewResponse(ctx, http.StatusOK, "Data is found", category)
+}
+
+/* LIST CATEGORY */
+type listCategoryParams struct {
+	Size   int32 `form:"size" binding:"required,min=1,max=100"` // page_size
+	PageNo int32 `form:"page_no" binding:"required,min=0"`      // page number, 0-based
+}
+
+func (server *Server) listCategory(ctx *gin.Context) {
+	var req listCategoryParams
+
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	arg := db.ListCategoryParams{
+		Limit:  req.Size,
+		Offset: (req.PageNo - 1) * req.Size,
+	}
+
+	categories, err := server.store.ListCategory(ctx, arg)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	totalCount, err := server.store.CountListCategory(ctx)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	totalPages := int32(math.Ceil(float64(totalCount) / float64(req.Size)))
+
+	data := map[string]interface{}{
+		"categories": categories,
+		"limit":      req.Size,
+		"page":       req.PageNo,
+		"totalCount": totalCount,
+		"totalPages": totalPages,
+	}
+
+	NewResponse(ctx, http.StatusOK, "Data found", data)
 }

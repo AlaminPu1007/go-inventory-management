@@ -15,11 +15,6 @@ SET name = $2
 WHERE id = $1
 RETURNING *;
 
--- name: DeleteCategory :one
-DELETE FROM categories
-WHERE id = $1
-RETURNING *;
-
 -- name: PatchCategory :one
 UPDATE categories
 SET name = COALESCE($2, name)
@@ -32,6 +27,10 @@ ORDER BY id
 LIMIT $1 -- NUMBER OF ROWS TO RETURN
 OFFSET $2 -- NUMBER OF ROWS TO SKIP
 ;
+
+-- name: CountListCategory :one
+SELECT COUNT(*)
+FROM categories;
 
 -- name: SearchCategory :many
 SELECT * FROM categories

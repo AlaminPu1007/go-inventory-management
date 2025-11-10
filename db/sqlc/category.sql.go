@@ -9,6 +9,18 @@ import (
 	"context"
 )
 
+const countListCategory = `-- name: CountListCategory :one
+SELECT COUNT(*)
+FROM categories
+`
+
+func (q *Queries) CountListCategory(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countListCategory)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countSearchCategories = `-- name: CountSearchCategories :one
 SELECT COUNT(*) 
 FROM categories
@@ -30,19 +42,6 @@ RETURNING id, name
 
 func (q *Queries) CreateCategory(ctx context.Context, name string) (Category, error) {
 	row := q.db.QueryRowContext(ctx, createCategory, name)
-	var i Category
-	err := row.Scan(&i.ID, &i.Name)
-	return i, err
-}
-
-const deleteCategory = `-- name: DeleteCategory :one
-DELETE FROM categories
-WHERE id = $1
-RETURNING id, name
-`
-
-func (q *Queries) DeleteCategory(ctx context.Context, id int32) (Category, error) {
-	row := q.db.QueryRowContext(ctx, deleteCategory, id)
 	var i Category
 	err := row.Scan(&i.ID, &i.Name)
 	return i, err
