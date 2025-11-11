@@ -43,7 +43,7 @@ test:
 	go test -v --cover ./...
 
 server:
-	go run main.go
-	# air
+	# go run main.go
+	air
 
 .PHONY: server createdb dropdb postgress migrateup migratedown startpostgress sqlc migratedown1 migrateup1 db_docs db_schema
