@@ -9,12 +9,6 @@ FROM categories
 WHERE id = $1
 LIMIT 1;
 
--- name: UpdateCategory :one
-UPDATE categories
-SET name = $2
-WHERE id = $1
-RETURNING *;
-
 -- name: PatchCategory :one
 UPDATE categories
 SET name = COALESCE($2, name)

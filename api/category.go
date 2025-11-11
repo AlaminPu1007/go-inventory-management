@@ -76,12 +76,12 @@ func (server *Server) updateCategoryById(ctx *gin.Context) {
 		ctx.JSON(http.StatusForbidden, errorResponse(err))
 	}
 
-	arg := db.UpdateCategoryParams{
+	arg := db.PatchCategoryParams{
 		ID:   int32(req.Id),
 		Name: req.Name,
 	}
 
-	category, err = server.store.UpdateCategory(ctx, arg)
+	category, err = server.store.PatchCategory(ctx, arg)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -219,4 +219,37 @@ func (server *Server) listCategory(ctx *gin.Context) {
 	}
 
 	NewResponse(ctx, http.StatusOK, "Data found", data)
+}
+
+/* REMOVED CATEGORY BY ID */
+func (server *Server) deleteCategoryById(ctx *gin.Context) {
+	var req getCategoryParams
+
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	// find item to check it's validity
+	_, err := server.store.GetCategory(ctx, req.ID)
+
+	if err != nil {
+
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	category, err := server.store.RemoveCategory(ctx, req.ID)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	NewResponse(ctx, http.StatusOK, "Data deleted successfully", category)
 }

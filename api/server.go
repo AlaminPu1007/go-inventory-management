@@ -31,7 +31,7 @@ func NewServer(config utils.Config, store *db.Store) (*Server, error) {
 	server := &Server{
 		store:      store,
 		tokenMaker: tokenMaker,
-		config:     config, // we will get token maker related info later
+		config:     config, // we will get token maker related info
 	}
 
 	server.setupRouter()
@@ -43,25 +43,42 @@ func NewServer(config utils.Config, store *db.Store) (*Server, error) {
 func (server *Server) setupRouter() {
 
 	router := gin.Default()
-	// create a router group for protected route or users
-	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 
-	// create a user
-	router.POST("/users/register", server.createUser)
-	// login user
-	router.POST("/users/login", server.loginUser)
+	// public routes
+	userRoutes := router.Group("/users")
+	{
+		// create a user
+		userRoutes.POST("/register", server.createUser)
 
-	// CATEGORY ROUTES GOES HERE
-	// create category
-	authRoutes.POST(`/category/create`, adminMiddleware(), server.createCategory)
-	// update category by id
-	authRoutes.PATCH("/category/:id", adminMiddleware(), server.updateCategoryById)
-	// search category by name
-	authRoutes.GET("/category/search", adminMiddleware(), server.searchCategoryByName)
-	// get list of category by {limit, offset}
-	authRoutes.GET("/categories", adminMiddleware(), server.listCategory)
-	// get category by id
-	authRoutes.GET("/category/:id", adminMiddleware(), server.getCategoryById)
+		// login user
+		userRoutes.POST("/login", server.loginUser)
+	}
+
+	// Protected routes (requires auth)
+	authRoutes := router.Group("/")
+	authRoutes.Use(authMiddleware(server.tokenMaker))
+
+	// CATEGORY ROUTES GOES HERE : CATEGORY ROUTES GROUP
+	categoryRoutes := authRoutes.Group("/category", adminMiddleware())
+	{
+		// create category
+		categoryRoutes.POST(`/create`, server.createCategory)
+
+		// update category by id
+		categoryRoutes.PATCH("/:id", server.updateCategoryById)
+
+		// search category by name
+		categoryRoutes.GET("/search", server.searchCategoryByName)
+
+		// get list of category by {limit, offset}
+		categoryRoutes.GET("/categories", server.listCategory)
+
+		// get category by id
+		categoryRoutes.GET("/:id", server.getCategoryById)
+
+		// removed category by it's id
+		categoryRoutes.DELETE("/:id", server.deleteCategoryById)
+	}
 
 	server.router = router
 }
