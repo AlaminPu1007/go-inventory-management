@@ -80,6 +80,12 @@ func (server *Server) setupRouter() {
 		categoryRoutes.DELETE("/:id", server.deleteCategoryById)
 	}
 
+	// PRODUCTS ROUTES GOES HERE : PRODUCT ROUTE GROUPS
+	productsRoutes := authRoutes.Group("/product", adminMiddleware())
+	{
+		productsRoutes.POST("/create", server.createProducts)
+	}
+
 	server.router = router
 }
 
