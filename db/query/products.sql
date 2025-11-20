@@ -20,13 +20,14 @@ LIMIT $1 -- NUMBER OF ROWS TO RETURN
 OFFSET $2 -- NUMBER OF ROWS TO SKIP
 ;
 
--- name: UpdateCategory :one
+-- name: UpdateProduct :one
 UPDATE products
 SET 
     name = COALESCE($2, name),
     description = COALESCE($3, description),
     price = COALESCE($4, price),
-    category_id = COALESCE($5, category_id)
+    category_id = COALESCE($5, category_id),
+    quantity = COALESCE($6, quantity)
 WHERE 
     id = $1
 RETURNING *;

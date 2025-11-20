@@ -194,33 +194,36 @@ func (q *Queries) SearchProducts(ctx context.Context, arg SearchProductsParams) 
 	return items, nil
 }
 
-const updateCategory = `-- name: UpdateCategory :one
+const updateProduct = `-- name: UpdateProduct :one
 UPDATE products
 SET 
     name = COALESCE($2, name),
     description = COALESCE($3, description),
     price = COALESCE($4, price),
-    category_id = COALESCE($5, category_id)
+    category_id = COALESCE($5, category_id),
+    quantity = COALESCE($6, quantity)
 WHERE 
     id = $1
 RETURNING id, name, description, price, quantity, category_id
 `
 
-type UpdateCategoryParams struct {
+type UpdateProductParams struct {
 	ID          int32          `json:"id"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
 	Price       string         `json:"price"`
 	CategoryID  int32          `json:"category_id"`
+	Quantity    int32          `json:"quantity"`
 }
 
-func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Product, error) {
-	row := q.db.QueryRowContext(ctx, updateCategory,
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
+	row := q.db.QueryRowContext(ctx, updateProduct,
 		arg.ID,
 		arg.Name,
 		arg.Description,
 		arg.Price,
 		arg.CategoryID,
+		arg.Quantity,
 	)
 	var i Product
 	err := row.Scan(

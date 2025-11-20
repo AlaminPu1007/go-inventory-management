@@ -65,7 +65,7 @@ func (server *Server) setupRouter() {
 		categoryRoutes.POST(`/create`, server.createCategory)
 
 		// update category by id
-		categoryRoutes.PATCH("/:id", server.updateCategoryById)
+		categoryRoutes.PATCH("/update/:id", server.updateCategoryById)
 
 		// search category by name
 		categoryRoutes.GET("/search", server.searchCategoryByName)
@@ -84,6 +84,7 @@ func (server *Server) setupRouter() {
 	productsRoutes := authRoutes.Group("/product", adminMiddleware())
 	{
 		productsRoutes.POST("/create", server.createProducts)
+		productsRoutes.PATCH("/update/:id", server.updateProductById)
 	}
 
 	server.router = router
