@@ -71,9 +71,12 @@ func (server *Server) createProducts(ctx *gin.Context) {
 	NewResponse(ctx, http.StatusOK, "Product created successfully", utils.ToProductResponse(product))
 }
 
-/* CREATE PRODUCTS */
+/* UPDATE PRODUCTS */
+type updateProductURI struct {
+	ID int32 `uri:"id" binding:"required,min=1"`
+}
+
 type updateProductParams struct {
-	ID          int32   `uri:"id" binding:"required,min=1"`
 	Name        string  `json:"name" binding:"required,min=1,max=50"`
 	Description *string `json:"description,omitempty"`
 	Price       string  `json:"price" binding:"required,min=1,max=9223372036854775807"`
@@ -83,8 +86,9 @@ type updateProductParams struct {
 
 func (server *Server) updateProductById(ctx *gin.Context) {
 	var req updateProductParams
+	var ID updateProductURI
 
-	if err := ctx.ShouldBindUri(&req.ID); err != nil {
+	if err := ctx.ShouldBindUri(&ID); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -95,6 +99,17 @@ func (server *Server) updateProductById(ctx *gin.Context) {
 	}
 
 	_, err := server.store.GetCategory(ctx, req.CategoryID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	_, err = server.store.GetProductById(ctx, ID.ID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -120,7 +135,7 @@ func (server *Server) updateProductById(ctx *gin.Context) {
 	}
 
 	arg := db.UpdateProductParams{
-		ID:          req.ID,
+		ID:          ID.ID,
 		Name:        req.Name,
 		Description: dbDescription,
 		CategoryID:  req.CategoryID,
@@ -135,5 +150,5 @@ func (server *Server) updateProductById(ctx *gin.Context) {
 		return
 	}
 
-	NewResponse(ctx, http.StatusOK, "Updated successfully", product)
+	NewResponse(ctx, http.StatusOK, "Updated successfully", utils.ToProductResponse(product))
 }
