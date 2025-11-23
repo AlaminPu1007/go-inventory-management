@@ -83,8 +83,23 @@ func (server *Server) setupRouter() {
 	// PRODUCTS ROUTES GOES HERE : PRODUCT ROUTE GROUPS
 	productsRoutes := authRoutes.Group("/product", adminMiddleware())
 	{
+		// create product
 		productsRoutes.POST("/create", server.createProducts)
+
+		// update product by id
 		productsRoutes.PATCH("/update/:id", server.updateProductById)
+
+		// get lists of products
+		productsRoutes.GET("/products", server.listProducts)
+
+		// search product by {name or category_id}
+		productsRoutes.GET("/search", server.searchProducts)
+
+		// get product by id
+		productsRoutes.GET("/:id", server.getProductById)
+
+		// remove item by id
+		productsRoutes.DELETE("/:id", server.deleteProductById)
 	}
 
 	server.router = router

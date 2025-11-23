@@ -39,8 +39,8 @@ FROM products;
 -- name: SearchProducts :many
 SELECT *
 FROM products
-WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%')
-  AND ($2::int IS NULL OR category_id = $2)
+WHERE ($1 = '' OR name ILIKE '%' || $1 || '%')
+  AND ($2 = 0 OR category_id = $2)
 ORDER BY name
 LIMIT $3 -- NUMBER OF ROWS TO RETURN
 OFFSET $4 -- NUMBER OF ROWS TO SKIP
@@ -52,3 +52,9 @@ FROM products
 WHERE 
     ($1::text IS NULL OR name ILIKE '%' || $1 || '%')
 AND ($2::int IS NULL OR category_id = $2);
+
+
+-- name: RemoveProduct :one
+DELETE FROM products
+WHERE id = $1
+RETURNING *;

@@ -3,11 +3,11 @@ package api
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"math"
 	"net/http"
 
 	db "github.com/alaminpu1007/inventory-system/db/sqlc"
+	"github.com/alaminpu1007/inventory-system/internal/models"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 )
@@ -21,7 +21,7 @@ func (server *Server) createCategory(ctx *gin.Context) {
 	var req createCategoryParams
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		NewResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
@@ -29,15 +29,14 @@ func (server *Server) createCategory(ctx *gin.Context) {
 
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
-			log.Println((pqErr.Code.Name()))
 			switch pqErr.Code.Name() {
 			case "unique_violation", "foreign_key_violation":
-				ctx.JSON(http.StatusForbidden, errorResponse(err))
+				NewResponse(ctx, http.StatusForbidden, err.Error(), nil)
 				return
 			}
 		}
 
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -56,12 +55,12 @@ func (server *Server) updateCategoryById(ctx *gin.Context) {
 
 	// Bind URI
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		NewResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		NewResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
@@ -70,10 +69,10 @@ func (server *Server) updateCategoryById(ctx *gin.Context) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			NewResponse(ctx, http.StatusNotFound, err.Error(), nil)
 			return
 		}
-		ctx.JSON(http.StatusForbidden, errorResponse(err))
+		NewResponse(ctx, http.StatusForbidden, err.Error(), nil)
 	}
 
 	arg := db.PatchCategoryParams{
@@ -85,11 +84,11 @@ func (server *Server) updateCategoryById(ctx *gin.Context) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			value := errors.New("Category name already exists")
-			ctx.JSON(http.StatusNotFound, errorResponse(value))
+			value := errors.New("The name is already exists")
+			NewResponse(ctx, http.StatusNotFound, value.Error(), nil)
 			return
 		}
-		ctx.JSON(http.StatusForbidden, errorResponse(err))
+		NewResponse(ctx, http.StatusForbidden, err.Error(), nil)
 		return
 	}
 
@@ -109,7 +108,7 @@ func (server *Server) searchCategoryByName(ctx *gin.Context) {
 	var req searchCategoryQuery
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		NewResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
@@ -122,7 +121,7 @@ func (server *Server) searchCategoryByName(ctx *gin.Context) {
 	categories, err := server.store.SearchCategory(ctx, arg)
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -130,8 +129,20 @@ func (server *Server) searchCategoryByName(ctx *gin.Context) {
 	totalPages := int32(math.Ceil(float64(totalCount) / float64(req.Size)))
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
+	}
+
+	if len(categories) == 0 {
+		categories = make([]db.Category, 0)
+	}
+
+	var message string
+
+	if len(categories) == 0 {
+		message = "No category found"
+	} else {
+		message = "Categories found"
 	}
 
 	data := map[string]interface{}{
@@ -143,19 +154,15 @@ func (server *Server) searchCategoryByName(ctx *gin.Context) {
 	}
 
 	// Send custom response
-	NewResponse(ctx, http.StatusOK, "Data found", data)
+	NewResponse(ctx, http.StatusOK, message, data)
 }
 
 /* GET CATEGORY BY ID */
-type getCategoryParams struct {
-	ID int32 `uri:"id" binding:"required,min=1"`
-}
-
 func (server *Server) getCategoryById(ctx *gin.Context) {
-	var req getCategoryParams
+	var req models.GetByIdParams
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		NewResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
@@ -164,11 +171,11 @@ func (server *Server) getCategoryById(ctx *gin.Context) {
 	if err != nil {
 
 		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			NewResponse(ctx, http.StatusNotFound, err.Error(), nil)
 			return
 		}
 
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -176,16 +183,12 @@ func (server *Server) getCategoryById(ctx *gin.Context) {
 }
 
 /* LIST CATEGORY */
-type listCategoryParams struct {
-	Size   int32 `form:"size" binding:"required,min=1,max=100"` // page_size
-	PageNo int32 `form:"page_no" binding:"required,min=0"`      // page number, 0-based
-}
 
 func (server *Server) listCategory(ctx *gin.Context) {
-	var req listCategoryParams
+	var req models.PaginationQuery
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		NewResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
@@ -197,14 +200,14 @@ func (server *Server) listCategory(ctx *gin.Context) {
 	categories, err := server.store.ListCategory(ctx, arg)
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
 	totalCount, err := server.store.CountListCategory(ctx)
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
@@ -223,10 +226,10 @@ func (server *Server) listCategory(ctx *gin.Context) {
 
 /* REMOVED CATEGORY BY ID */
 func (server *Server) deleteCategoryById(ctx *gin.Context) {
-	var req getCategoryParams
+	var req models.GetByIdParams
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		NewResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
@@ -236,18 +239,18 @@ func (server *Server) deleteCategoryById(ctx *gin.Context) {
 	if err != nil {
 
 		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			NewResponse(ctx, http.StatusNotFound, err.Error(), nil)
 			return
 		}
 
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
 	category, err := server.store.RemoveCategory(ctx, req.ID)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		NewResponse(ctx, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 

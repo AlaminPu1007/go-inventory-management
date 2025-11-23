@@ -142,21 +142,41 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 	return items, nil
 }
 
+const removeProduct = `-- name: RemoveProduct :one
+DELETE FROM products
+WHERE id = $1
+RETURNING id, name, description, price, quantity, category_id
+`
+
+func (q *Queries) RemoveProduct(ctx context.Context, id int32) (Product, error) {
+	row := q.db.QueryRowContext(ctx, removeProduct, id)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Price,
+		&i.Quantity,
+		&i.CategoryID,
+	)
+	return i, err
+}
+
 const searchProducts = `-- name: SearchProducts :many
 SELECT id, name, description, price, quantity, category_id
 FROM products
-WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%')
-  AND ($2::int IS NULL OR category_id = $2)
+WHERE ($1 = '' OR name ILIKE '%' || $1 || '%')
+  AND ($2 = 0 OR category_id = $2)
 ORDER BY name
 LIMIT $3 -- NUMBER OF ROWS TO RETURN
 OFFSET $4 -- NUMBER OF ROWS TO SKIP
 `
 
 type SearchProductsParams struct {
-	Column1 string `json:"column_1"`
-	Column2 int32  `json:"column_2"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
+	Column1 interface{} `json:"column_1"`
+	Column2 interface{} `json:"column_2"`
+	Limit   int32       `json:"limit"`
+	Offset  int32       `json:"offset"`
 }
 
 func (q *Queries) SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error) {
