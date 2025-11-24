@@ -37,18 +37,23 @@ func (q *Queries) CountSearchCategories(ctx context.Context, dollar_1 string) (i
 const createCategory = `-- name: CreateCategory :one
 INSERT INTO categories (name)
 VALUES ($1)
-RETURNING id, name
+RETURNING id, name, created_at, updated_at
 `
 
 func (q *Queries) CreateCategory(ctx context.Context, name string) (Category, error) {
 	row := q.db.QueryRowContext(ctx, createCategory, name)
 	var i Category
-	err := row.Scan(&i.ID, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 
 const getCategory = `-- name: GetCategory :one
-SELECT id, name
+SELECT id, name, created_at, updated_at
 FROM categories
 WHERE id = $1
 LIMIT 1
@@ -57,12 +62,17 @@ LIMIT 1
 func (q *Queries) GetCategory(ctx context.Context, id int32) (Category, error) {
 	row := q.db.QueryRowContext(ctx, getCategory, id)
 	var i Category
-	err := row.Scan(&i.ID, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 
 const listCategory = `-- name: ListCategory :many
-SELECT id, name FROM categories
+SELECT id, name, created_at, updated_at FROM categories
 ORDER BY id
 LIMIT $1 -- NUMBER OF ROWS TO RETURN
 OFFSET $2 -- NUMBER OF ROWS TO SKIP
@@ -82,7 +92,12 @@ func (q *Queries) ListCategory(ctx context.Context, arg ListCategoryParams) ([]C
 	items := []Category{}
 	for rows.Next() {
 		var i Category
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -100,7 +115,7 @@ const patchCategory = `-- name: PatchCategory :one
 UPDATE categories
 SET name = COALESCE($2, name)
 WHERE id = $1
-RETURNING id, name
+RETURNING id, name, created_at, updated_at
 `
 
 type PatchCategoryParams struct {
@@ -111,25 +126,35 @@ type PatchCategoryParams struct {
 func (q *Queries) PatchCategory(ctx context.Context, arg PatchCategoryParams) (Category, error) {
 	row := q.db.QueryRowContext(ctx, patchCategory, arg.ID, arg.Name)
 	var i Category
-	err := row.Scan(&i.ID, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 
 const removeCategory = `-- name: RemoveCategory :one
 DELETE FROM categories
 WHERE id = $1
-RETURNING id, name
+RETURNING id, name, created_at, updated_at
 `
 
 func (q *Queries) RemoveCategory(ctx context.Context, id int32) (Category, error) {
 	row := q.db.QueryRowContext(ctx, removeCategory, id)
 	var i Category
-	err := row.Scan(&i.ID, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 
 const searchCategory = `-- name: SearchCategory :many
-SELECT id, name FROM categories
+SELECT id, name, created_at, updated_at FROM categories
 WHERE name ILIKE '%' || $1::text || '%'
 ORDER BY id
 LIMIT $2 -- NUMBER OF ROWS TO RETURN
@@ -151,7 +176,12 @@ func (q *Queries) SearchCategory(ctx context.Context, arg SearchCategoryParams) 
 	items := []Category{}
 	for rows.Next() {
 		var i Category
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

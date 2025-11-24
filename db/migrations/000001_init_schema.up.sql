@@ -16,7 +16,7 @@ CREATE TABLE "orders" (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     total_amount NUMERIC(10,2) NOT NULL CHECK (total_amount >= 0),
-    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    status VARCHAR(50) NOT NULL DEFAULT 'pending', -- ('pending', 'confirmed', 'shipped', 'cancelled')
     created_at TIMESTAMP DEFAULT NOW()
 );
 

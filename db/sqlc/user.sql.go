@@ -14,7 +14,7 @@ INSERT INTO users (
     username, email, password, role, full_name
 ) VALUES (
   $1, $2, $3, $4, $5
-) RETURNING id, username, role, password, full_name, email, is_email_verified, password_changed_at, created_at
+) RETURNING id, username, role, password, full_name, email, is_email_verified, password_changed_at, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -44,12 +44,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.IsEmailVerified,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, username, role, password, full_name, email, is_email_verified, password_changed_at, created_at FROM users
+SELECT id, username, role, password, full_name, email, is_email_verified, password_changed_at, created_at, updated_at FROM users
 WHERE username = $1 LIMIT 1
 `
 
@@ -66,6 +67,7 @@ func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
 		&i.IsEmailVerified,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

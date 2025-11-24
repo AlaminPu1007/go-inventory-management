@@ -47,7 +47,7 @@ INSERT INTO products (
     name, description, price, quantity, category_id
 ) VALUES (
     $1, $2, $3, $4, $5
-) RETURNING id, name, description, price, quantity, category_id
+) RETURNING id, name, description, price, quantity, category_id, created_at, updated_at
 `
 
 type CreateProductParams struct {
@@ -74,12 +74,14 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.Price,
 		&i.Quantity,
 		&i.CategoryID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getProductById = `-- name: GetProductById :one
-SELECT id, name, description, price, quantity, category_id
+SELECT id, name, description, price, quantity, category_id, created_at, updated_at
 FROM products
 WHERE id = $1
 LIMIT 1
@@ -95,12 +97,14 @@ func (q *Queries) GetProductById(ctx context.Context, id int32) (Product, error)
 		&i.Price,
 		&i.Quantity,
 		&i.CategoryID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const listProducts = `-- name: ListProducts :many
-SELECT id, name, description, price, quantity, category_id
+SELECT id, name, description, price, quantity, category_id, created_at, updated_at
 FROM products
 ORDER BY id
 LIMIT $1 -- NUMBER OF ROWS TO RETURN
@@ -128,6 +132,8 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 			&i.Price,
 			&i.Quantity,
 			&i.CategoryID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -145,7 +151,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 const removeProduct = `-- name: RemoveProduct :one
 DELETE FROM products
 WHERE id = $1
-RETURNING id, name, description, price, quantity, category_id
+RETURNING id, name, description, price, quantity, category_id, created_at, updated_at
 `
 
 func (q *Queries) RemoveProduct(ctx context.Context, id int32) (Product, error) {
@@ -158,12 +164,14 @@ func (q *Queries) RemoveProduct(ctx context.Context, id int32) (Product, error) 
 		&i.Price,
 		&i.Quantity,
 		&i.CategoryID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const searchProducts = `-- name: SearchProducts :many
-SELECT id, name, description, price, quantity, category_id
+SELECT id, name, description, price, quantity, category_id, created_at, updated_at
 FROM products
 WHERE ($1 = '' OR name ILIKE '%' || $1 || '%')
   AND ($2 = 0 OR category_id = $2)
@@ -200,6 +208,8 @@ func (q *Queries) SearchProducts(ctx context.Context, arg SearchProductsParams) 
 			&i.Price,
 			&i.Quantity,
 			&i.CategoryID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -224,7 +234,7 @@ SET
     quantity = COALESCE($6, quantity)
 WHERE 
     id = $1
-RETURNING id, name, description, price, quantity, category_id
+RETURNING id, name, description, price, quantity, category_id, created_at, updated_at
 `
 
 type UpdateProductParams struct {
@@ -253,6 +263,8 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.Price,
 		&i.Quantity,
 		&i.CategoryID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

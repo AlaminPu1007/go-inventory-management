@@ -12,8 +12,10 @@ import (
 )
 
 type Category struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
+	ID        int32     `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Order struct {
@@ -22,14 +24,18 @@ type Order struct {
 	TotalAmount string       `json:"total_amount"`
 	Status      string       `json:"status"`
 	CreatedAt   sql.NullTime `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
 }
 
 type OrderItem struct {
-	ID        int32  `json:"id"`
-	OrderID   int32  `json:"order_id"`
-	ProductID int32  `json:"product_id"`
-	Quantity  int32  `json:"quantity"`
-	Price     string `json:"price"`
+	ID        int32     `json:"id"`
+	OrderID   int32     `json:"order_id"`
+	ProductID int32     `json:"product_id"`
+	Quantity  int32     `json:"quantity"`
+	Price     string    `json:"price"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Product struct {
@@ -39,6 +45,8 @@ type Product struct {
 	Price       string         `json:"price"`
 	Quantity    int32          `json:"quantity"`
 	CategoryID  int32          `json:"category_id"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 type Session struct {
@@ -62,4 +70,5 @@ type User struct {
 	IsEmailVerified   bool      `json:"is_email_verified"`
 	PasswordChangedAt time.Time `json:"password_changed_at"`
 	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
