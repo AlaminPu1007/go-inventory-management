@@ -102,6 +102,13 @@ func (server *Server) setupRouter() {
 		productsRoutes.DELETE("/:id", server.deleteProductById)
 	}
 
+	// ORDER ROUTE GOES HERE : ORDER ROUTE GROUP
+	ordersRoutes := authRoutes.Group("/order")
+	{
+		// create order
+		ordersRoutes.POST("/create", server.createOrder)
+	}
+
 	server.router = router
 }
 
