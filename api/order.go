@@ -3,6 +3,7 @@ package api
 import (
 	"database/sql"
 	"fmt"
+	"math"
 	"net/http"
 
 	db "github.com/alaminpu1007/inventory-system/db/sqlc"
@@ -176,17 +177,34 @@ func (server *Server) getOrderListsOfLoggedUser(ctx *gin.Context) {
 		return
 	}
 
+	// get total orders
+	totalCount, err := server.store.CountOrdersByUser(ctx, user.ID)
+
+	if err != nil {
+		NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	totalPages := int32(math.Ceil(float64(totalCount) / float64(req.Size)))
+
 	if orders == nil {
 		orders = []db.Order{}
 	}
 
-	var message string
-	if len(orders) == 0 {
-		message = "Data is not found"
-	} else {
-		message = "Data is  found"
+	var message string = "Data is not found"
+
+	if len(orders) != 0 {
+		message = "Data is found"
 	}
 
-	NewResponse(ctx, http.StatusOK, message, orders)
+	data := map[string]interface{}{
+		"orders":     orders,
+		"limit":      req.Size,
+		"page":       req.PageNo,
+		"totalCount": totalCount,
+		"totalPages": totalPages,
+	}
+
+	NewResponse(ctx, http.StatusOK, message, data)
 
 }

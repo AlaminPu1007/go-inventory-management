@@ -115,6 +115,12 @@ func (server *Server) setupRouter() {
 		ordersRoutes.GET("/lists", server.getOrderListsOfLoggedUser)
 	}
 
+	// ORDER ITEMS APIS GOES HERE : ORDER-ITEMS ROUTE GROUP
+	orderItems := authRoutes.Group("/order-items")
+	{
+		orderItems.GET("/lists", server.getOrdersItemForLoggedUsers)
+	}
+
 	server.router = router
 }
 

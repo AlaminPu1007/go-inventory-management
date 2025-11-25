@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"time"
 )
 
 const createOrderItem = `-- name: CreateOrderItem :one
@@ -89,6 +91,82 @@ func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID int32) ([]
 			&i.Quantity,
 			&i.Price,
 			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOrderItemsByUser = `-- name: ListOrderItemsByUser :many
+SELECT 
+    oi.id AS order_item_id,
+    oi.order_id,
+    oi.product_id,
+    oi.quantity,
+    oi.price,
+    oi.created_at AS item_created_at,
+    oi.updated_at AS item_updated_at,
+
+    o.status,
+    o.total_amount,
+    o.created_at AS order_created_at,
+    o.updated_at AS order_updated_at
+FROM order_items oi
+INNER JOIN orders o ON oi.order_id = o.id
+WHERE o.user_id = $1
+ORDER BY oi.id
+LIMIT $2 OFFSET $3
+`
+
+type ListOrderItemsByUserParams struct {
+	UserID int32 `json:"user_id"`
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListOrderItemsByUserRow struct {
+	OrderItemID    int32        `json:"order_item_id"`
+	OrderID        int32        `json:"order_id"`
+	ProductID      int32        `json:"product_id"`
+	Quantity       int32        `json:"quantity"`
+	Price          string       `json:"price"`
+	ItemCreatedAt  time.Time    `json:"item_created_at"`
+	ItemUpdatedAt  time.Time    `json:"item_updated_at"`
+	Status         string       `json:"status"`
+	TotalAmount    string       `json:"total_amount"`
+	OrderCreatedAt sql.NullTime `json:"order_created_at"`
+	OrderUpdatedAt time.Time    `json:"order_updated_at"`
+}
+
+func (q *Queries) ListOrderItemsByUser(ctx context.Context, arg ListOrderItemsByUserParams) ([]ListOrderItemsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listOrderItemsByUser, arg.UserID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListOrderItemsByUserRow{}
+	for rows.Next() {
+		var i ListOrderItemsByUserRow
+		if err := rows.Scan(
+			&i.OrderItemID,
+			&i.OrderID,
+			&i.ProductID,
+			&i.Quantity,
+			&i.Price,
+			&i.ItemCreatedAt,
+			&i.ItemUpdatedAt,
+			&i.Status,
+			&i.TotalAmount,
+			&i.OrderCreatedAt,
+			&i.OrderUpdatedAt,
 		); err != nil {
 			return nil, err
 		}
