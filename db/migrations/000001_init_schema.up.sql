@@ -16,7 +16,17 @@ CREATE TABLE "orders" (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     total_amount NUMERIC(10,2) NOT NULL CHECK (total_amount >= 0),
-    status VARCHAR(50) NOT NULL DEFAULT 'pending', -- ('pending', 'confirmed', 'shipped', 'cancelled')
+    status VARCHAR(50) NOT NULL DEFAULT 'pending'
+    CHECK (status IN (
+            'pending', 
+            'confirmed', 
+            'processing', 
+            'shipped', 
+            'out_for_delivery', 
+            'delivered',
+            'cancelled',
+            'failed'
+    )), -- ('pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered','cancelled','failed')
     created_at TIMESTAMP DEFAULT NOW()
 );
 

@@ -30,3 +30,11 @@ type OrderResponse struct {
 	Order      utils.OrderResponseItem `json:"order"`
 	OrderItems []db.OrderItem          `json:"items"`
 }
+
+type OrderIdRequest struct {
+	ID int32 `uri:"id" binding:"required,min=1"`
+}
+
+type OrderStatusParams struct {
+	Status string `json:"status" binding:"required,oneof=pending confirmed processing shipped out_for_delivery delivered cancelled failed"`
+}

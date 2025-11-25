@@ -107,6 +107,12 @@ func (server *Server) setupRouter() {
 	{
 		// create order
 		ordersRoutes.POST("/create", server.createOrder)
+
+		// update order status
+		ordersRoutes.PATCH("/update/status/:id", adminMiddleware(), server.updateOrderStatusById)
+
+		// get order lists of logging users
+		ordersRoutes.GET("/lists", server.getOrderListsOfLoggedUser)
 	}
 
 	server.router = router
