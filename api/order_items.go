@@ -86,7 +86,7 @@ func (server *Server) getOrdersItemForLoggedUsers(ctx *gin.Context) {
 	NewResponse(ctx, http.StatusOK, message, data)
 }
 
-/* DELETE AN EXISTING ORDERS IF IT'S ALREADY IN INITIAL STATUS (PENDING) */
+/* DELETE AN EXISTING ORDERS IF IT'S ALREADY IN INITIAL STATUS (ACTIVE) */
 func (server *Server) removedItemById(ctx *gin.Context) {
 	var req models.OrderIdRequest
 

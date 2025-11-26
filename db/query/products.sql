@@ -32,6 +32,12 @@ WHERE
     id = $1
 RETURNING *;
 
+-- name: DecreaseProductStock :one
+UPDATE products
+SET quantity = quantity - $2
+WHERE id = $1 AND quantity >= $2
+RETURNING *;
+
 -- name: CountListProducts :one
 SELECT COUNT(*)
 FROM products;

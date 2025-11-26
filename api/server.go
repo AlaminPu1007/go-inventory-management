@@ -122,7 +122,7 @@ func (server *Server) setupRouter() {
 		orderItemsRoute.GET("/lists", server.getOrdersItemForLoggedUsers)
 
 		// removing order items if it's status is "active"
-		orderItemsRoute.DELETE("/:id", server.removedItemById)
+		orderItemsRoute.DELETE("/:id", adminMiddleware(), server.removedItemById)
 	}
 
 	server.router = router

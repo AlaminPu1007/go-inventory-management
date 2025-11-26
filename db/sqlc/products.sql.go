@@ -80,6 +80,34 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	return i, err
 }
 
+const decreaseProductStock = `-- name: DecreaseProductStock :one
+UPDATE products
+SET quantity = quantity - $2
+WHERE id = $1 AND quantity >= $2
+RETURNING id, name, description, price, quantity, category_id, created_at, updated_at
+`
+
+type DecreaseProductStockParams struct {
+	ID       int32 `json:"id"`
+	Quantity int32 `json:"quantity"`
+}
+
+func (q *Queries) DecreaseProductStock(ctx context.Context, arg DecreaseProductStockParams) (Product, error) {
+	row := q.db.QueryRowContext(ctx, decreaseProductStock, arg.ID, arg.Quantity)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Price,
+		&i.Quantity,
+		&i.CategoryID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getProductById = `-- name: GetProductById :one
 SELECT id, name, description, price, quantity, category_id, created_at, updated_at
 FROM products

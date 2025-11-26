@@ -48,52 +48,72 @@ func (server *Server) createOrder(ctx *gin.Context) {
 		TotalAmount: fmt.Sprintf("%.2f", total),
 	}
 
-	// insert into order table
-	order, err := server.store.CreateOrder(ctx, arg)
+	/* START DB TRANSACTION */
+	var createdOrder db.Order
+	var orderItems []db.OrderItem
+
+	err = server.store.ExecTx(ctx, func(q *db.Queries) error {
+		// CREATE ORDER
+		order, err := q.CreateOrder(ctx, arg)
+
+		if err != nil {
+			return err
+		}
+
+		createdOrder = db.Order{
+			ID:          order.ID,
+			UserID:      order.UserID,
+			TotalAmount: order.TotalAmount,
+			Status:      order.Status,
+			CreatedAt:   order.CreatedAt,
+		}
+
+		// INSERT EACH ITEM INTO "order_items" TABLE, ALSO UPDATE PRODUCT QUANTITY
+		for _, item := range req.Items {
+
+			itemParams := db.CreateOrderItemParams{
+				OrderID:   order.ID,
+				ProductID: item.ProductID,
+				Quantity:  item.Quantity,
+				Price:     fmt.Sprintf("%.2f", item.Price),
+			}
+
+			orderItem, err := q.CreateOrderItem(ctx, itemParams)
+			if err != nil {
+				return err
+			}
+
+			orderItems = append(orderItems, orderItem)
+
+			// DECREASE PRODUCT QUANTITY
+			_, err = q.DecreaseProductStock(ctx, db.DecreaseProductStockParams{
+				ID:       item.ProductID,
+				Quantity: int32(item.Quantity),
+			})
+
+			if err != nil {
+				if err == sql.ErrNoRows {
+					return fmt.Errorf("insufficient stock for product_id %d", item.ProductID)
+				}
+				return err
+			}
+		}
+
+		return nil
+
+	})
 
 	if err != nil {
 		NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	var createdItems []db.OrderItem
-
-	// Insert order items table:
-	for _, item := range req.Items {
-
-		itemArg := db.CreateOrderItemParams{
-			OrderID:   order.ID,
-			ProductID: item.ProductID,
-			Quantity:  item.Quantity,
-			Price:     fmt.Sprintf("%.2f", item.Price),
-		}
-
-		createdItem, err := server.store.CreateOrderItem(ctx, itemArg)
-
-		if err != nil {
-			NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
-			return
-		}
-
-		// add to array
-		createdItems = append(createdItems, createdItem)
-	}
-
-	createdOrder := db.Order{
-		ID:          order.ID,
-		UserID:      order.UserID,
-		TotalAmount: order.TotalAmount,
-		Status:      order.Status,
-		CreatedAt:   order.CreatedAt,
-	}
-
-	// final response
-	response := models.OrderResponse{
+	resp := models.OrderResponse{
 		Order:      utils.ToOrderResponse(createdOrder),
-		OrderItems: createdItems,
+		OrderItems: orderItems,
 	}
 
-	NewResponse(ctx, http.StatusOK, "Order created successfully", response)
+	NewResponse(ctx, http.StatusOK, "Order created successfully", resp)
 }
 
 /* UPDATE ORDER STATUS BY ID */
