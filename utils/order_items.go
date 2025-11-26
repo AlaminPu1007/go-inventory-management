@@ -13,6 +13,7 @@ type OrderItemResponse struct {
 	ProductID      int32     `json:"product_id"`
 	Quantity       int32     `json:"quantity"`
 	Price          string    `json:"price"`
+	ItemStatus     string    `json:"item_status"`
 	ItemCreatedAt  time.Time `json:"item_created_at"`
 	ItemUpdatedAt  time.Time `json:"item_updated_at"`
 	Status         string    `json:"status"`
@@ -35,6 +36,7 @@ func ConvertOrderItem(row db.ListOrderItemsByUserRow) OrderItemResponse {
 		ProductID:      row.ProductID,
 		Quantity:       row.Quantity,
 		Price:          row.Price,
+		ItemStatus:     row.ItemStatus,
 		ItemCreatedAt:  row.ItemCreatedAt,
 		ItemUpdatedAt:  row.ItemUpdatedAt,
 		Status:         row.Status,

@@ -122,6 +122,32 @@ func (q *Queries) ListOrdersByUser(ctx context.Context, arg ListOrdersByUserPara
 	return items, nil
 }
 
+const recalculateOrderTotal = `-- name: RecalculateOrderTotal :one
+UPDATE orders
+SET total_amount = (
+    SELECT COALESCE(SUM(price * quantity), 0)
+    FROM order_items
+    WHERE order_id = $1
+      AND status = 'active'       -- only include active items
+)
+WHERE id = $1
+RETURNING id, user_id, total_amount, status, created_at, updated_at
+`
+
+func (q *Queries) RecalculateOrderTotal(ctx context.Context, orderID int32) (Order, error) {
+	row := q.db.QueryRowContext(ctx, recalculateOrderTotal, orderID)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.TotalAmount,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateOrderStatus = `-- name: UpdateOrderStatus :one
 UPDATE orders
 SET status = $2

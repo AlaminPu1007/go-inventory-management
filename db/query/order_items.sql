@@ -20,6 +20,12 @@ UPDATE order_items
 SET status = $2
 WHERE id = $1;
 
+-- name: GetOrderItemById :one
+SELECT *
+FROM order_items
+WHERE id = $1
+LIMIT 1;
+
 -- name: DeleteOrderItem :exec
 DELETE FROM order_items
 WHERE id = $1;
@@ -33,6 +39,7 @@ SELECT
     oi.price,
     oi.created_at AS item_created_at,
     oi.updated_at AS item_updated_at,
+    oi.status as item_status,
 
     o.status,
     o.total_amount,
@@ -40,6 +47,12 @@ SELECT
     o.updated_at AS order_updated_at
 FROM order_items oi
 INNER JOIN orders o ON oi.order_id = o.id
-WHERE o.user_id = $1
+WHERE o.user_id = $1 AND oi.status = 'active'
 ORDER BY oi.id
 LIMIT $2 OFFSET $3;
+
+-- name: CountActiveOrderItemsByUser :one
+SELECT COUNT(*)
+FROM order_items oi
+INNER JOIN orders o ON oi.order_id = o.id
+WHERE o.user_id = $1 AND oi.status = 'active';

@@ -11,6 +11,20 @@ import (
 	"time"
 )
 
+const countActiveOrderItemsByUser = `-- name: CountActiveOrderItemsByUser :one
+SELECT COUNT(*)
+FROM order_items oi
+INNER JOIN orders o ON oi.order_id = o.id
+WHERE o.user_id = $1 AND oi.status = 'active'
+`
+
+func (q *Queries) CountActiveOrderItemsByUser(ctx context.Context, userID int32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countActiveOrderItemsByUser, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createOrderItem = `-- name: CreateOrderItem :one
 INSERT INTO order_items (
     order_id, product_id, quantity, price
@@ -57,6 +71,29 @@ WHERE id = $1
 func (q *Queries) DeleteOrderItem(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, deleteOrderItem, id)
 	return err
+}
+
+const getOrderItemById = `-- name: GetOrderItemById :one
+SELECT id, order_id, product_id, quantity, price, status, created_at, updated_at
+FROM order_items
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetOrderItemById(ctx context.Context, id int32) (OrderItem, error) {
+	row := q.db.QueryRowContext(ctx, getOrderItemById, id)
+	var i OrderItem
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.ProductID,
+		&i.Quantity,
+		&i.Price,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getOrderItemsByOrderID = `-- name: GetOrderItemsByOrderID :many
@@ -114,6 +151,7 @@ SELECT
     oi.price,
     oi.created_at AS item_created_at,
     oi.updated_at AS item_updated_at,
+    oi.status as item_status,
 
     o.status,
     o.total_amount,
@@ -121,7 +159,7 @@ SELECT
     o.updated_at AS order_updated_at
 FROM order_items oi
 INNER JOIN orders o ON oi.order_id = o.id
-WHERE o.user_id = $1
+WHERE o.user_id = $1 AND oi.status = 'active'
 ORDER BY oi.id
 LIMIT $2 OFFSET $3
 `
@@ -140,6 +178,7 @@ type ListOrderItemsByUserRow struct {
 	Price          string       `json:"price"`
 	ItemCreatedAt  time.Time    `json:"item_created_at"`
 	ItemUpdatedAt  time.Time    `json:"item_updated_at"`
+	ItemStatus     string       `json:"item_status"`
 	Status         string       `json:"status"`
 	TotalAmount    string       `json:"total_amount"`
 	OrderCreatedAt sql.NullTime `json:"order_created_at"`
@@ -163,6 +202,7 @@ func (q *Queries) ListOrderItemsByUser(ctx context.Context, arg ListOrderItemsBy
 			&i.Price,
 			&i.ItemCreatedAt,
 			&i.ItemUpdatedAt,
+			&i.ItemStatus,
 			&i.Status,
 			&i.TotalAmount,
 			&i.OrderCreatedAt,

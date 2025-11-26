@@ -116,9 +116,13 @@ func (server *Server) setupRouter() {
 	}
 
 	// ORDER ITEMS APIS GOES HERE : ORDER-ITEMS ROUTE GROUP
-	orderItems := authRoutes.Group("/order-items")
+	orderItemsRoute := authRoutes.Group("/order-items")
 	{
-		orderItems.GET("/lists", server.getOrdersItemForLoggedUsers)
+		// get login users all order-lists
+		orderItemsRoute.GET("/lists", server.getOrdersItemForLoggedUsers)
+
+		// removing order items if it's status is "active"
+		orderItemsRoute.DELETE("/:id", server.removedItemById)
 	}
 
 	server.router = router

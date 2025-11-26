@@ -30,3 +30,14 @@ UPDATE orders
 SET status = $2
 WHERE id = $1
 RETURNING *;
+
+-- name: RecalculateOrderTotal :one
+UPDATE orders
+SET total_amount = (
+    SELECT COALESCE(SUM(price * quantity), 0)
+    FROM order_items
+    WHERE order_id = $1
+      AND status = 'active'       -- only include active items
+)
+WHERE id = $1
+RETURNING *;

@@ -56,7 +56,7 @@ func (server *Server) getOrdersItemForLoggedUsers(ctx *gin.Context) {
 	}
 
 	// get total orders
-	totalCount, err := server.store.CountOrdersByUser(ctx, user.ID)
+	totalCount, err := server.store.CountActiveOrderItemsByUser(ctx, user.ID)
 
 	if err != nil {
 		NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
@@ -84,4 +84,62 @@ func (server *Server) getOrdersItemForLoggedUsers(ctx *gin.Context) {
 	}
 
 	NewResponse(ctx, http.StatusOK, message, data)
+}
+
+/* DELETE AN EXISTING ORDERS IF IT'S ALREADY IN INITIAL STATUS (PENDING) */
+func (server *Server) removedItemById(ctx *gin.Context) {
+	var req models.OrderIdRequest
+
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		NewResponse(ctx, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	// check it's an valid item or not
+	order_item1, err := server.store.GetOrderItemById(ctx, req.ID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			NewResponse(ctx, http.StatusNotFound, err.Error(), nil)
+			return
+		}
+	}
+
+	if order_item1.Status != "active" {
+		NewResponse(ctx, http.StatusNotFound, "No item is found", nil)
+		return
+	}
+
+	// check this order is exists: GetOrderById
+	order, err := server.store.GetOrderById(ctx, order_item1.OrderID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			NewResponse(ctx, http.StatusNotFound, err.Error(), nil)
+			return
+		}
+	}
+
+	arg := db.UpdateOrderItemStatusParams{
+		ID:     order_item1.ID,
+		Status: "de-active",
+	}
+
+	err = server.store.UpdateOrderItemStatus(ctx, arg)
+
+	if err != nil {
+		NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+	}
+
+	// after making status de-active, need to re-calculate total prices
+	_, err = server.store.RecalculateOrderTotal(ctx, order.ID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			NewResponse(ctx, http.StatusInternalServerError, err.Error(), nil)
+			return
+		}
+	}
+
+	NewResponse(ctx, http.StatusOK, "Deleted successfully", nil)
 }
